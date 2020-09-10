@@ -1,7 +1,6 @@
-import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/material.dart';
-import 'package:highlight_text/highlight_text.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+
 
 void main() {
   runApp(MyApp());
@@ -17,59 +16,74 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.red,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: SpeechScreen(),
+      home: FeedPage(),
     );
   }
 }
 
-class SpeechScreen extends StatefulWidget {
+class FeedPage extends StatefulWidget {
+
   @override
-  _SpeechScreenState createState() => _SpeechScreenState();
+  _FeedPageState createState() => _FeedPageState();
 }
 
-class _SpeechScreenState extends State<SpeechScreen> {
-  final Map<String, HighlightedWord> _highlights = {
-    'flutter': HighlightedWord(
-      onTap: () => print('flutter'),
-      textStyle: const TextStyle(
-        color: Colors.blue,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-    'voice': HighlightedWord(
-      onTap: () => print('voice'),
-      textStyle: const TextStyle(
-        color: Colors.green,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-    'subscribe': HighlightedWord(
-      onTap: () => print('subscribe'),
-      textStyle: const TextStyle(
-        color: Colors.red,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-    'like': HighlightedWord(
-      onTap: () => print('like'),
-      textStyle: const TextStyle(
-        color: Colors.blueAccent,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-    'comment': HighlightedWord(
-      onTap: () => print('comment'),
-      textStyle: const TextStyle(
-        color: Colors.green,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-  };
+class _FeedPageState extends State<FeedPage> {
 
-  stt.SpeechToText _speech;
+  final nameCon = new TextEditingController();
+  final idCon = new TextEditingController();
+  final feeds = new TextEditingController();
+  String feedtext = "",month,year;
+
+
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+
+
+
+  final GlobalKey<FormState> _formKeyValue = new GlobalKey<FormState>();
+  List<String> _feedbackType = <String>["Positive","Negative"];
+
+  //refer flutter drop down by whatsapp coder to show from firebase
+  String selectedType = "";
   bool _isListening = false;
+  String selected = "first";
+  String resultText = "";
+  stt.SpeechToText _speech;
   String _text = 'Press the button and start speaking';
-  double _confidence = 1.0;
+  void _listen() async {
+
+    if (!_isListening) {
+      bool available = await _speech.initialize(
+        onStatus: (val) => print('onStatus: $val'),
+        onError: (val) => print('onError: $val'),
+      );   // set a timer of 40 seconds to listen
+      if (available) {
+        setState(() => _isListening = true);
+
+        _speech.listen(
+          onResult: (val) => setState(() {
+            //fix the double mic things
+            _text = val.recognizedWords;
+            feeds.text = _text;
+
+          
+          }),
+        );
+      }
+    } else {
+      setState(() {
+        _isListening = false;
+        _speech.stop();
+
+
+      });
+      _listen();
+
+
+
+
+    }
+  }
+
 
   @override
   void initState() {
@@ -77,63 +91,150 @@ class _SpeechScreenState extends State<SpeechScreen> {
     _speech = stt.SpeechToText();
   }
 
+
+
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
+      resizeToAvoidBottomPadding: true,
+      key: _scaffoldKey,
       appBar: AppBar(
-        title: Text('Confidence: ${(_confidence * 100.0).toStringAsFixed(1)}%'),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: AvatarGlow(
-        animate: _isListening,
-        glowColor: Theme.of(context).primaryColor,
-        endRadius: 75.0,
-        duration: const Duration(milliseconds: 2000),
-        repeatPauseDuration: const Duration(milliseconds: 100),
-        repeat: true,
-        child: FloatingActionButton(
-          onPressed: _listen,
-          child: Icon(_isListening ? Icons.mic : Icons.mic_none),
-        ),
-      ),
-      body: SingleChildScrollView(
-        reverse: true,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(30.0, 30.0, 30.0, 150.0),
-          child: TextHighlight(
-            text: _text,
-            words: _highlights,
-            textStyle: const TextStyle(
-              fontSize: 32.0,
-              color: Colors.black,
-              fontWeight: FontWeight.w400,
+        leading: IconButton(
+            icon: Icon(
+              Icons.book,
+              color: Colors.white,
             ),
+            onPressed: () {}),
+
+        title: Container(
+          alignment: Alignment.center,
+
+          child: Text("Feeds",
+              style: TextStyle(fontFamily: "CrimsonText-Bold",fontSize: 20,
+                color: Colors.white,
+              )),
+        ),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(
+              Icons.book,
+              size: 20.0,
+              color: Colors.white,
+            ),
+            onPressed: null,
           ),
+        ],
+      ),
+
+
+      body: Form(
+
+        key: _formKeyValue,
+        autovalidate: true,
+
+        child: new ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+          children: <Widget>[
+            new Padding(padding: EdgeInsets.all(10.0)),
+            SizedBox(
+              height: 10.0,
+            ),
+
+
+            SizedBox(
+              height: 30.0,
+            ),
+
+
+
+
+
+            SizedBox(
+              height: 10.0,
+            ),
+            //random chart and employee feeds waits until change happens in dropdowns .
+
+
+
+
+            Container(
+              width: 150.0,
+              height:100,
+
+
+              padding: EdgeInsets.symmetric(
+                vertical: 10.0,
+                horizontal: 12.0,
+              ),
+              child:TextFormField(
+
+                controller:feeds,
+                keyboardType: TextInputType.multiline,
+                maxLines: 5,
+                minLines: 3,
+                decoration: new InputDecoration(
+                  hintText: 'Edit Your Feeds ',
+                  fillColor: Colors.white,
+                  border: new OutlineInputBorder(
+                    borderRadius: new BorderRadius.circular(20.0),
+                    borderSide: new BorderSide(
+                    ),
+                  ),
+                  //fillColor: Colors.green
+                ),
+
+
+                onSaved: (val) =>  feedtext= feeds.text,
+                style: new TextStyle(
+                  fontFamily: "Poppins",
+                ),
+
+              ),
+
+            ),
+            FloatingActionButton(
+              onPressed: _listen,
+              child: Icon(Icons.mic ),
+            ),
+            RaisedButton(
+                color: Colors.red,
+                textColor: Colors.white,
+                child: Padding(
+                    padding: EdgeInsets.all(10.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: <Widget>[
+                        Text("Submit", style: TextStyle(fontSize: 24.0,fontFamily: "CrimsonText-Bold")),
+                      ],
+
+                    )),
+
+                onPressed: ()  async {
+
+                  //print(feeds.text.compareTo(n));
+
+
+
+
+
+                } ,
+                //Using Transactions
+                // Firestore.instance.runTransaction((Transaction crudTransaction) async {
+                //   CollectionReference reference =
+                //       await Firestore.instance.collection('testcrud');
+
+                //   reference.add(carData);
+                // });
+
+
+                shape: new RoundedRectangleBorder(borderRadius: new BorderRadius.circular(30.0))),
+
+
+          ],
         ),
       ),
     );
   }
-
-  void _listen() async {
-    if (!_isListening) {
-      bool available = await _speech.initialize(
-        onStatus: (val) => print('onStatus: $val'),
-        onError: (val) => print('onError: $val'),
-      );
-      if (available) {
-        setState(() => _isListening = true);
-        _speech.listen(
-          onResult: (val) => setState(() {
-            _text = val.recognizedWords;
-            if (val.hasConfidenceRating && val.confidence > 0) {
-              _confidence = val.confidence;
-            }
-          }),
-        );
-      }
-    } else {
-      setState(() => _isListening = false);
-      _speech.stop();
-    }
-  }
 }
+
