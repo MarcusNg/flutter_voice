@@ -28,7 +28,20 @@ class SpeechScreen extends StatefulWidget {
 }
 
 class _SpeechScreenState extends State<SpeechScreen> {
-  final Map<String, HighlightedWord> _highlights = {
+  stt.SpeechToText _speech;
+  bool _isListening = false;
+  String _text = 'Press the button and start speaking';
+  double _confidence = 1.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _speech = stt.SpeechToText();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final Map<String, HighlightedWord> _highlights = {
     'flutter': HighlightedWord(
       onTap: () => print('flutter'),
       textStyle: const TextStyle(
@@ -65,20 +78,6 @@ class _SpeechScreenState extends State<SpeechScreen> {
       ),
     ),
   };
-
-  stt.SpeechToText _speech;
-  bool _isListening = false;
-  String _text = 'Press the button and start speaking';
-  double _confidence = 1.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _speech = stt.SpeechToText();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Confidence: ${(_confidence * 100.0).toStringAsFixed(1)}%'),
@@ -102,7 +101,7 @@ class _SpeechScreenState extends State<SpeechScreen> {
           padding: const EdgeInsets.fromLTRB(30.0, 30.0, 30.0, 150.0),
           child: TextHighlight(
             text: _text,
-            words: _highlights,
+            words: _highlights as LinkedHashMap<String, HighlightedWord>,
             textStyle: const TextStyle(
               fontSize: 32.0,
               color: Colors.black,
